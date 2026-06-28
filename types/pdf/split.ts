@@ -1,33 +1,21 @@
-export type SplitMode =
-  | "everyPage"
-  | "pageRanges"
-  | "selectedPages";
-
-export interface PageRange {
-  start: number;
-  end: number;
+export interface SplitPdfItem {
+  id: string;
+  file: File;
+  name: string;
+  size: number;
+  pages: number;
+  status: "ready" | "error";
+  error?: string;
 }
 
-export interface SplitOptions {
-  mode: SplitMode;
-
-  /**
-   * Used when mode === "pageRanges"
-   */
-  ranges?: PageRange[];
-
-  /**
-   * Used when mode === "selectedPages"
-   */
-  selectedPages?: number[];
+export interface SplitPdfOptions {
+  mode: "all" | "range";
+  range?: string;
 }
 
-export interface SplitResult {
-  fileName: string;
-  pdfBytes: Uint8Array;
-}
-export interface SplitPdfResponse {
+export interface SplitPdfResult {
   success: boolean;
-  files?: SplitResult[];
+  files?: Blob[];
+  fileNames?: string[];
   error?: string;
 }

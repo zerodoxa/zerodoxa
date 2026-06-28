@@ -5,7 +5,9 @@ import type { MergePdfItem, MergePdfResult } from "@/types/pdf";
 
 import { extractPdfMetadata } from "./metadataService";
 
-export async function prepareMergeItems(files: File[]): Promise<MergePdfItem[]> {
+export async function prepareMergeItems(
+  files: File[]
+): Promise<MergePdfItem[]> {
   const items: MergePdfItem[] = [];
 
   for (const file of files) {
@@ -45,7 +47,10 @@ export async function prepareMergeItems(files: File[]): Promise<MergePdfItem[]> 
         name: file.name,
         size: file.size,
         status: "error",
-        error: error instanceof Error ? error.message : "Invalid or corrupted PDF.",
+        error:
+          error instanceof Error
+            ? error.message
+            : "Invalid or corrupted PDF.",
       });
     }
   }
@@ -53,7 +58,9 @@ export async function prepareMergeItems(files: File[]): Promise<MergePdfItem[]> 
   return items;
 }
 
-export async function mergePdfFiles(files: MergePdfItem[]): Promise<MergePdfResult> {
+export async function mergePdfFiles(
+  files: MergePdfItem[]
+): Promise<MergePdfResult> {
   const validFiles = files.filter((item) => item.status === "ready");
 
   if (validFiles.length < 2) {
@@ -68,7 +75,9 @@ export async function mergePdfFiles(files: MergePdfItem[]): Promise<MergePdfResu
 
     for (const item of validFiles) {
       const sourceBytes = await item.file.arrayBuffer();
+
       const sourcePdf = await PDFDocument.load(sourceBytes);
+
       const copiedPages = await mergedPdf.copyPages(
         sourcePdf,
         sourcePdf.getPageIndices()
@@ -78,12 +87,20 @@ export async function mergePdfFiles(files: MergePdfItem[]): Promise<MergePdfResu
     }
 
     const mergedBytes = await mergedPdf.save();
-    const mergedArray = mergedBytes instanceof Uint8Array ? mergedBytes : new Uint8Array(mergedBytes);
+
+    const mergedArray =
+      mergedBytes instanceof Uint8Array
+        ? mergedBytes
+        : new Uint8Array(mergedBytes);
+
     const mergedBuffer = mergedArray.buffer.slice(
       mergedArray.byteOffset,
       mergedArray.byteOffset + mergedArray.byteLength
     ) as ArrayBuffer;
-    const blob = new Blob([mergedBuffer], { type: "application/pdf" });
+
+    const blob = new Blob([mergedBuffer], {
+      type: "application/pdf",
+    });
 
     return {
       success: true,

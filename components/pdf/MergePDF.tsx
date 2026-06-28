@@ -5,7 +5,7 @@ import { FilePlus2 } from "lucide-react";
 import { mergePdfFiles, prepareMergeItems } from "@/services/pdf/mergeService";
 import type { MergePdfItem } from "@/types/pdf";
 
-import Button from "@/components/ui/Button";
+
 
 import MergeControls from "./MergeControls";
 import MergeList from "./MergeList";
@@ -113,7 +113,7 @@ export default function MergePDF() {
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        className={`group mx-auto max-w-4xl rounded-[32px] border border-dashed p-6 text-center backdrop-blur-xl transition-all duration-300 md:p-12 ${
+        className={`group mx-auto max-w-4xl rounded-4xl border border-dashed p-6 text-center backdrop-blur-xl transition-all duration-300 md:p-12 ${
           isDragging
             ? "scale-[1.02] border-cyan-300 bg-blue-500/10 shadow-[0_24px_80px_rgba(34,211,238,0.20)]"
             : "border-blue-400/40 bg-white/5 hover:-translate-y-1 hover:border-blue-300/70 hover:bg-white/[0.07] hover:shadow-[0_20px_70px_rgba(37,99,235,0.20)]"

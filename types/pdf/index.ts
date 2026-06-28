@@ -74,3 +74,4 @@ export interface MergePdfResult {
   fileName?: string;
   error?: string;
 }
+export * from "./split";
