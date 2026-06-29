@@ -1,4 +1,9 @@
-export type ProcessingStatus = "idle" | "uploading" | "processing" | "complete" | "error";
+export type ProcessingStatus =
+  | "idle"
+  | "uploading"
+  | "processing"
+  | "complete"
+  | "error";
 
 export interface PDFDocumentMetadata {
   fileName: string;
@@ -30,7 +35,14 @@ export interface UploadedPDF extends PDFMetadata {
 
 export interface ProcessingJob {
   id: string;
-  operation: "upload" | "compress" | "merge" | "split" | "rotate" | "delete-pages" | "extract-pages";
+  operation:
+    | "upload"
+    | "compress"
+    | "merge"
+    | "split"
+    | "rotate"
+    | "delete-pages"
+    | "extract-pages";
   status: ProcessingStatus;
   progress: number;
   stage: string;
@@ -74,4 +86,9 @@ export interface MergePdfResult {
   fileName?: string;
   error?: string;
 }
+
 export * from "./split";
+export * from "./compress";
+export * from "./rotate";
+export * from "./delete-pages";
+export * from "./extract-pages";
