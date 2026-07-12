@@ -1,6 +1,6 @@
 "use client";
 
-import { Files, Sparkles, Trash2 } from "lucide-react";
+import { Sparkles, Trash2 } from "lucide-react";
 
 import Button from "@/components/ui/Button";
 

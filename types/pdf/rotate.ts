@@ -9,7 +9,7 @@ export interface RotatePdfItem {
 }
 
 export interface RotatePdfOptions {
-  angle: 90 | 180 | 270;
+  rotations: Record<number, number>;
 }
 
 export interface RotatePdfResult {

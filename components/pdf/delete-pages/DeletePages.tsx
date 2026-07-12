@@ -1,283 +1,216 @@
 "use client";
 
-import {
-  useState,
-  useCallback,
-  ChangeEvent,
-  DragEvent,
-} from "react";
-
-import {
-  Trash2,
-  FilePlus2,
-} from "lucide-react";
-
-import {
-  prepareDeleteItem,
-  deletePages,
-} from "@/services/pdf/deletePagesService";
-
-import type {
-  DeletePagesItem,
-  DeletePagesOptions,
-} from "@/types/pdf";
+import { useState } from "react";
+import { Trash2, Download, RefreshCw } from "lucide-react";
+import PDFUpload from "@/components/pdf/PDFUpload";
+import DeleteControls from "@/components/pdf/delete-pages/DeleteControls";
+import SuccessAlert from "@/components/pdf/SuccessAlert";
+import ErrorAlert from "@/components/pdf/ErrorAlert";
+import { extractPdfMetadata } from "@/services/pdf/metadataService";
 
 export default function DeletePages() {
-  const [item, setItem] =
-    useState<DeletePagesItem | null>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const [pages, setPages] = useState("");
+  const [pageCount, setPageCount] = useState(0);
 
-  const [pages, setPages] =
-    useState("");
+  const [loadingMetadata, setLoadingMetadata] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+  const [downloadName, setDownloadName] = useState<string | null>(null);
 
-  const [loading, setLoading] =
-    useState(false);
+  const handleFileSelected = async (selectedFile: File) => {
+    setFile(selectedFile);
+    setError("");
+    setSuccess("");
+    resetState();
 
-  const [isDragging, setDragging] =
-    useState(false);
-
-  const [error, setError] =
-    useState("");
-
-  const [success, setSuccess] =
-    useState("");
-
-  const handleFiles = useCallback(
-    async (
-      incoming:
-        | FileList
-        | null
-        | undefined
-    ) => {
-      if (!incoming?.length) return;
-
-      const prepared =
-        await prepareDeleteItem(
-          incoming[0]
-        );
-
-      setItem(prepared);
-
-      setError("");
-
-      setSuccess("");
-    },
-    []
-  );
-
-  const dragOver = (
-    e: DragEvent<HTMLDivElement>
-  ) => {
-    e.preventDefault();
-
-    setDragging(true);
+    setLoadingMetadata(true);
+    try {
+      const meta = await extractPdfMetadata(selectedFile);
+      if (meta.success && meta.metadata) {
+        setPageCount(meta.metadata.pageCount ?? 0);
+      } else {
+        setError(meta.error || "Failed to load PDF metadata.");
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Unable to read PDF page count.");
+    } finally {
+      setLoadingMetadata(false);
+    }
   };
 
-  const dragLeave = (
-    e: DragEvent<HTMLDivElement>
-  ) => {
-    e.preventDefault();
-
-    setDragging(false);
+  const handleFileRemoved = () => {
+    setFile(null);
+    setError("");
+    setSuccess("");
+    resetState();
   };
 
-  const drop = (
-    e: DragEvent<HTMLDivElement>
-  ) => {
-    e.preventDefault();
-
-    setDragging(false);
-
-    void handleFiles(
-      e.dataTransfer.files
-    );
+  const resetState = () => {
+    setPages("");
+    setPageCount(0);
+    if (downloadUrl) {
+      URL.revokeObjectURL(downloadUrl);
+      setDownloadUrl(null);
+    }
+    setDownloadName(null);
   };
 
-  const chooseFiles = (
-    e: ChangeEvent<HTMLInputElement>
-  ) => {
-    void handleFiles(
-      e.target.files
-    );
+  const handleDeleteSubmit = async () => {
+    if (!file) {
+      setError("Please choose a PDF file first.");
+      return;
+    }
 
-    e.target.value = "";
-  };
+    if (!pages.trim()) {
+      setError("Please enter pages to delete.");
+      return;
+    }
 
-  const handleDelete =
-    async () => {
-      if (!item) {
-        setError(
-          "Choose a PDF first."
-        );
-        return;
+    setLoading(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("pages", pages);
+
+      const response = await fetch("/api/pdf/delete-pages", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to delete pages.");
       }
 
-      if (
-        item.status === "error"
-      ) {
-        setError(
-          item.error ??
-            "Invalid PDF."
-        );
-        return;
-      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const originalName = file.name.replace(/\.pdf$/i, "");
+      const finalName = `${originalName}-pages-deleted.pdf`;
 
-      setLoading(true);
+      setDownloadUrl(url);
+      setDownloadName(finalName);
 
-      setError("");
-
-      setSuccess("");
-
-      const options: DeletePagesOptions =
-        {
-          pages,
-        };
-
-      const result =
-        await deletePages(
-          item,
-          options
-        );
-
-      if (
-        !result.success ||
-        !result.blob
-      ) {
-        setError(
-          result.error ??
-            "Delete failed."
-        );
-
-        setLoading(false);
-
-        return;
-      }
-
-      const url =
-        URL.createObjectURL(
-          result.blob
-        );
-
-      const link =
-        document.createElement("a");
-
+      // Trigger download automatically
+      const link = document.createElement("a");
       link.href = url;
-
-      link.download =
-        result.fileName ??
-        "updated.pdf";
-
-      document.body.appendChild(
-        link
-      );
-
+      link.download = finalName;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
 
-      document.body.removeChild(
-        link
-      );
-
-      URL.revokeObjectURL(
-        url
-      );
-
-      setSuccess(
-        "Pages deleted successfully."
-      );
-
+      setSuccess("Pages deleted successfully!");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An unexpected error occurred.");
+    } finally {
       setLoading(false);
-    };
-      return (
-    <div
-      onDragOver={dragOver}
-      onDragLeave={dragLeave}
-      onDrop={drop}
-      className={`mx-auto max-w-4xl rounded-[32px] border border-dashed p-8 text-center transition-all duration-300 ${
-        isDragging
-          ? "border-cyan-400 bg-blue-500/10"
-          : "border-blue-400/40 bg-white/5"
-      }`}
-    >
-      <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-3xl bg-blue-600/20">
-        <Trash2 className="h-12 w-12 text-blue-400" />
-      </div>
+    }
+  };
 
-      <h2 className="mt-8 text-4xl font-bold text-white">
-        Delete Pages
-      </h2>
-
-      <p className="mt-4 text-gray-400">
-        Remove selected pages from your PDF.
-      </p>
-
-      <label className="mt-10 flex cursor-pointer justify-center">
-        <span className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-700">
-          <FilePlus2 className="h-5 w-5" />
-          Choose PDF
-        </span>
-
-        <input
-          type="file"
-          accept=".pdf"
-          className="hidden"
-          onChange={chooseFiles}
-        />
-      </label>
-
-      {item && (
-        <div className="mt-8 rounded-xl border border-blue-500/20 bg-black/20 p-5 text-left">
-          <p className="text-lg font-semibold text-white">
-            {item.name}
-          </p>
-
-          <p className="mt-2 text-gray-400">
-            {(item.size / 1024 / 1024).toFixed(2)} MB
-          </p>
-
-          <p className="text-gray-400">
-            {item.pages} Pages
-          </p>
+  return (
+    <div className="relative">
+      <div className="group mx-auto max-w-5xl rounded-4xl border border-dashed border-rose-400/40 bg-white/5 p-6 text-center backdrop-blur-xl transition-all duration-300 md:p-12">
+        
+        {/* Header Icon & Text */}
+        <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-3xl bg-rose-600/20 transition-all duration-300 md:h-28 md:w-28 group-hover:scale-105">
+          <Trash2 className="h-12 w-12 text-rose-400 md:h-14 md:w-14" />
         </div>
-      )}
 
-      <div className="mt-8 rounded-xl border border-gray-700 p-6">
-        <label className="block text-left text-white font-semibold">
-          Pages to Delete
-        </label>
-
-        <input
-          type="text"
-          value={pages}
-          onChange={(e) =>
-            setPages(e.target.value)
-          }
-          placeholder="Examples: 2,4,6 or 3-8"
-          className="mt-4 w-full rounded-xl border border-gray-700 bg-[#0f172a] px-4 py-3 text-white outline-none focus:border-blue-500"
-        />
-
-        <p className="mt-3 text-left text-sm text-gray-400">
-          You can enter single pages, comma-separated pages,
-          or page ranges.
+        <h2 className="mt-8 text-3xl font-extrabold text-white md:text-5xl">Delete PDF Pages</h2>
+        <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-gray-400">
+          Remove unwanted or redundant pages from your PDF documents instantly.
         </p>
+
+        {/* Upload component */}
+        <div className="mt-10">
+          <PDFUpload
+            disabled={loading || loadingMetadata}
+            onFileSelected={handleFileSelected}
+            onFileRemoved={handleFileRemoved}
+          />
+        </div>
+
+        {/* Metadata spinner */}
+        {loadingMetadata && (
+          <div className="mt-6 flex items-center justify-center gap-2 text-rose-300 text-sm">
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-rose-500/20 border-t-rose-500" />
+            Reading PDF page metrics...
+          </div>
+        )}
+
+        {/* Controls and Input */}
+        {file && !loading && !loadingMetadata && !downloadUrl && pageCount > 0 && (
+          <DeleteControls
+            pages={pages}
+            onChange={setPages}
+            totalCount={pageCount}
+            isDeleting={loading}
+            onSubmit={handleDeleteSubmit}
+          />
+        )}
+
+        {/* Loading Overlay */}
+        {loading && (
+          <div className="mt-10 py-16 flex flex-col items-center justify-center">
+            <div className="relative flex items-center justify-center">
+              <div className="h-16 w-16 animate-spin rounded-full border-4 border-rose-500/20 border-t-rose-500" />
+              <Trash2 className="absolute h-6 w-6 animate-pulse text-rose-400" />
+            </div>
+            <p className="mt-6 text-lg font-semibold text-white animate-pulse">Deleting pages...</p>
+            <p className="mt-2 text-sm text-gray-400">Rearranging PDF structure and copying selected pages</p>
+          </div>
+        )}
+
+        {/* Action Success Box */}
+        {downloadUrl && downloadName && !loading && (
+          <div className="mt-10 rounded-3xl border border-rose-500/20 bg-rose-950/10 p-8 text-left max-w-md mx-auto shadow-lg backdrop-blur-md">
+            <h3 className="text-xl font-bold text-white mb-4">PDF Processed</h3>
+            <p className="text-sm text-gray-400 mb-6">
+              Your cleaned PDF has been created. If the download did not start automatically, click the button below.
+            </p>
+
+            <div className="flex flex-col gap-4">
+              <button
+                type="button"
+                onClick={() => {
+                  const link = document.createElement("a");
+                  link.href = downloadUrl;
+                  link.download = downloadName;
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-rose-600 py-3 font-semibold text-white transition hover:bg-rose-700"
+              >
+                <Download className="h-5 w-5" />
+                Download Cleaned PDF
+              </button>
+
+              <button
+                type="button"
+                onClick={resetState}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-rose-500/30 bg-transparent py-3 font-semibold text-rose-300 transition hover:bg-rose-500/5 hover:border-rose-500"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Delete More Pages / Reset
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Success Alert */}
+        {success && <SuccessAlert message={success} />}
+
+        {/* Error Alert */}
+        {error && <ErrorAlert message={error} />}
+
       </div>
-            {error && (
-        <div className="mt-6 rounded-xl bg-red-500/20 p-3 text-red-300">
-          {error}
-        </div>
-      )}
-
-      {success && (
-        <div className="mt-6 rounded-xl bg-green-500/20 p-3 text-green-300">
-          {success}
-        </div>
-      )}
-
-      <button
-        onClick={handleDelete}
-        disabled={loading}
-        className="mt-8 rounded-xl bg-blue-600 px-8 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        {loading ? "Deleting..." : "Delete Pages"}
-      </button>
     </div>
   );
 }

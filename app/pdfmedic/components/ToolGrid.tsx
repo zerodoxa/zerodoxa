@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import SlideUp from "@/components/animations/SlideUp";
 import Card from "@/components/ui/Card";
 import Container from "@/components/ui/Container";
@@ -33,25 +34,27 @@ export default function ToolGrid() {
                 key={tool.title}
                 delay={index * 0.12}
               >
-                <Card className="flex h-[340px] cursor-pointer flex-col">
-                  <div
-                    className={`mb-6 inline-flex h-18 w-18 items-center justify-center rounded-2xl bg-gradient-to-br ${tool.color} p-5 transition-all duration-500 group-hover:rotate-6 group-hover:scale-110`}
-                  >
-                    <Icon className="h-8 w-8 text-white" />
-                  </div>
+                <Link href={tool.href} className="block group">
+                  <Card className="flex h-[340px] cursor-pointer flex-col">
+                    <div
+                      className={`mb-6 inline-flex h-18 w-18 items-center justify-center rounded-2xl bg-gradient-to-br ${tool.color} p-5 transition-all duration-500 group-hover:rotate-6 group-hover:scale-110`}
+                    >
+                      <Icon className="h-8 w-8 text-white" />
+                    </div>
 
-                  <h3 className="text-2xl font-bold text-white">
-                    {tool.title}
-                  </h3>
+                    <h3 className="text-2xl font-bold text-white">
+                      {tool.title}
+                    </h3>
 
-                  <p className="mt-4 flex-1 leading-7 text-gray-400">
-                    {tool.description}
-                  </p>
+                    <p className="mt-4 flex-1 leading-7 text-gray-400">
+                      {tool.description}
+                    </p>
 
-                  <button className="mt-6 text-left font-semibold text-blue-400 transition-all duration-300 group-hover:translate-x-2">
-                    Open Tool
-                  </button>
-                </Card>
+                    <button className="mt-6 text-left font-semibold text-blue-400 transition-all duration-300 group-hover:translate-x-2">
+                      Open Tool
+                    </button>
+                  </Card>
+                </Link>
               </SlideUp>
             );
           })}

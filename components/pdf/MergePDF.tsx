@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, DragEvent, useCallback, useState } from "react";
+import { ChangeEvent, DragEvent, useCallback, useState, useRef } from "react";
 import { FilePlus2 } from "lucide-react";
 import { mergePdfFiles, prepareMergeItems } from "@/services/pdf/mergeService";
 import type { MergePdfItem } from "@/types/pdf";
@@ -9,8 +9,10 @@ import type { MergePdfItem } from "@/types/pdf";
 
 import MergeControls from "./MergeControls";
 import MergeList from "./MergeList";
+import Button from "@/components/ui/Button";
 
 export default function MergePDF() {
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [items, setItems] = useState<MergePdfItem[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [isMerging, setIsMerging] = useState(false);
@@ -137,13 +139,13 @@ export default function MergePDF() {
         </p>
 
         <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-          <label className="cursor-pointer">
-            <span className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white transition hover:bg-blue-700">
+          <Button onClick={() => fileInputRef.current?.click()}>
+            <span className="inline-flex items-center gap-2">
               <FilePlus2 className="h-5 w-5" />
               Choose PDFs
             </span>
-            <input type="file" accept="application/pdf,.pdf" multiple onChange={handleFileChange} className="sr-only" />
-          </label>
+          </Button>
+          <input ref={fileInputRef} type="file" accept="application/pdf,.pdf" multiple onChange={handleFileChange} className="sr-only" />
           <p className="text-sm text-gray-500">Drag and drop multiple PDF files</p>
         </div>
 

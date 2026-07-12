@@ -15,11 +15,13 @@ import UploadStatus from "./UploadStatus";
 interface PDFUploadProps {
   disabled?: boolean;
   onFileSelected?: (file: File) => void;
+  onFileRemoved?: () => void;
 }
 
 export default function PDFUpload({
   disabled = false,
   onFileSelected,
+  onFileRemoved,
 }: PDFUploadProps) {
   const [isDragging, setIsDragging] = useState(false);
   const {
@@ -111,7 +113,10 @@ export default function PDFUpload({
                   void onFileSelected?.(uploadedFile.file);
                 }
               }}
-              onRemove={removeUploadedFile}
+              onRemove={() => {
+                removeUploadedFile();
+                onFileRemoved?.();
+              }}
             />
             {uploadedFile.metadata ? <MetadataGrid metadata={uploadedFile.metadata} /> : null}
           </>

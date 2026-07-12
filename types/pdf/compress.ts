@@ -8,8 +8,10 @@ export interface CompressPdfItem {
   error?: string;
 }
 
+export type CompressionLevel = "low" | "medium" | "high";
+
 export interface CompressPdfOptions {
-  quality: number;
+  level: CompressionLevel;
 }
 
 export interface CompressPdfResult {

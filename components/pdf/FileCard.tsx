@@ -1,6 +1,6 @@
 "use client";
 
-import { FileCheck2, FileX2, RefreshCw, Trash2 } from "lucide-react";
+import { FileCheck2, RefreshCw, Trash2 } from "lucide-react";
 
 import { formatFileSize } from "@/lib/pdf/validation";
 import type { UploadedPDF } from "@/types/pdf";

@@ -115,22 +115,17 @@ export async function splitPdf(
         }
       }
 
-      pageIndexes = [...new Set(pageIndexes)].filter(
-        (page) =>
-          page >= 0 && page < sourcePdf.getPageCount()
-      );
     }
     pageIndexes = [...new Set(pageIndexes)].filter(
-  (page) =>
-    page >= 0 && page < sourcePdf.getPageCount()
-);
+      (page) => page >= 0 && page < sourcePdf.getPageCount()
+    );
 
-if (pageIndexes.length === 0) {
-  return {
-    success: false,
-    error: "No valid pages found in the selected range.",
-  };
-}
+    if (pageIndexes.length === 0) {
+      return {
+        success: false,
+        error: "No valid pages found in the selected range.",
+      };
+    }
 
     for (const pageIndex of pageIndexes) {
       const pdf = await PDFDocument.create();

@@ -5,7 +5,10 @@ import {
   useCallback,
   ChangeEvent,
   DragEvent,
+  useRef,
 } from "react";
+
+import Button from "@/components/ui/Button";
 
 import {
   FilePlus2,
@@ -23,6 +26,7 @@ import type {
 } from "@/types/pdf";
 
 export default function SplitPDF() {
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [items, setItems] = useState<SplitPdfItem[]>([]);
 
   const [mode, setMode] =
@@ -169,19 +173,22 @@ export default function SplitPDF() {
           Split every page or extract custom page ranges.
         </p>
 
-        <label className="mt-10 flex cursor-pointer justify-center">
-          <span className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-700">
-            <FilePlus2 className="h-5 w-5" />
-            Choose PDF
-          </span>
+        <div className="mt-10 flex justify-center">
+          <Button onClick={() => fileInputRef.current?.click()}>
+            <span className="inline-flex items-center gap-2">
+              <FilePlus2 className="h-5 w-5" />
+              Choose PDF
+            </span>
+          </Button>
 
           <input
+            ref={fileInputRef}
             type="file"
             accept=".pdf"
             onChange={chooseFiles}
             className="hidden"
           />
-        </label>
+        </div>
 
         {selectedItem && (
           <div className="mt-8 rounded-xl border border-blue-500/20 bg-black/20 p-5 text-left">
@@ -244,15 +251,15 @@ export default function SplitPDF() {
           </div>
         )}
 
-        <button
-          disabled={loading}
-          onClick={handleSplit}
-          className="mt-8 rounded-xl bg-blue-600 px-8 py-3 font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
-        >
-          {loading
-            ? "Splitting..."
-            : "Split PDF"}
-        </button>
+        <div className="mt-8">
+          <Button
+            disabled={loading}
+            onClick={handleSplit}
+            className="w-full sm:w-auto"
+          >
+            {loading ? "Splitting..." : "Split PDF"}
+          </Button>
+        </div>
       </div>
     </div>
   );

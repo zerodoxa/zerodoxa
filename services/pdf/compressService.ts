@@ -52,7 +52,7 @@ export async function prepareCompressItem(
 
 export async function compressPdf(
   item: CompressPdfItem,
-  options: CompressPdfOptions
+  _options: CompressPdfOptions
 ): Promise<CompressPdfResult> {
   try {
     const bytes = await item.file.arrayBuffer();

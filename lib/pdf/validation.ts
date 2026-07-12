@@ -56,3 +56,74 @@ export function formatFileSize(bytes: number): string {
 
   return `${size.toFixed(size >= 10 || unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
 }
+
+export function parsePages(pagesInput: string, totalPagesCount: number): { pagesToDelete: Set<number>; errors: string[] } {
+  const pagesToDelete = new Set<number>();
+  const errors: string[] = [];
+  const trimmedInput = pagesInput.trim();
+
+  if (!trimmedInput) {
+    errors.push("Page selection cannot be empty.");
+    return { pagesToDelete, errors };
+  }
+
+  // Regex to validate that the input contains ONLY numbers, commas, hyphens, and whitespace.
+  if (!/^[0-9,\-\s]+$/.test(trimmedInput)) {
+    errors.push("Invalid characters in page selection. Use numbers, commas, and hyphens (e.g., 1,3,5-8).");
+    return { pagesToDelete, errors };
+  }
+
+  const parts = trimmedInput.split(",");
+  for (const part of parts) {
+    const cleanPart = part.trim();
+    if (!cleanPart) continue;
+
+    if (cleanPart.includes("-")) {
+      const rangeParts = cleanPart.split("-");
+      if (rangeParts.length !== 2) {
+        errors.push(`Invalid range format: "${cleanPart}"`);
+        continue;
+      }
+      const start = parseInt(rangeParts[0].trim(), 10);
+      const end = parseInt(rangeParts[1].trim(), 10);
+
+      if (isNaN(start) || isNaN(end)) {
+        errors.push(`Invalid numbers in range: "${cleanPart}"`);
+        continue;
+      }
+      if (start <= 0 || end <= 0) {
+        errors.push(`Page numbers must be greater than 0: "${cleanPart}"`);
+        continue;
+      }
+      if (start > end) {
+        errors.push(`Start page cannot be greater than end page in range: "${cleanPart}"`);
+        continue;
+      }
+      if (start > totalPagesCount || end > totalPagesCount) {
+        errors.push(`Range "${cleanPart}" exceeds document boundaries (max page: ${totalPagesCount})`);
+        continue;
+      }
+
+      for (let i = start; i <= end; i++) {
+        pagesToDelete.add(i);
+      }
+    } else {
+      const page = parseInt(cleanPart, 10);
+      if (isNaN(page)) {
+        errors.push(`Invalid page number: "${cleanPart}"`);
+        continue;
+      }
+      if (page <= 0) {
+        errors.push(`Page numbers must be greater than 0: "${cleanPart}"`);
+        continue;
+      }
+      if (page > totalPagesCount) {
+        errors.push(`Page ${page} exceeds document boundaries (max page: ${totalPagesCount})`);
+        continue;
+      }
+      pagesToDelete.add(page);
+    }
+  }
+
+  return { pagesToDelete, errors };
+}

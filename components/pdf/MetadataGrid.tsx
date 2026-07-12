@@ -6,7 +6,6 @@ interface MetadataGridProps {
   metadata: PDFDocumentMetadata;
 }
 
-const metadataFields: Array<{ label: string; value?: string | number }> = [];
 
 export default function MetadataGrid({ metadata }: MetadataGridProps) {
   const fields = [

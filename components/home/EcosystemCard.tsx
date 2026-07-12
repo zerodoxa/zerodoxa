@@ -1,11 +1,12 @@
 "use client";
 
+import { ComponentType } from "react";
 import Card from "@/components/ui/Card";
 
 type Props = {
   title: string;
   description: string;
-  icon: any;
+  icon: ComponentType<{ className?: string }>;
   color: string;
 };
 

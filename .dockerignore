@@ -1,0 +1,14 @@
+Dockerfile
+.dockerignore
+node_modules
+npm-debug.log
+README.md
+.next
+.git
+.gitignore
+.env
+.env.*.local
+.vercel
+project_structure.txt
+test-api.mjs
+test-protect-unlock.ts

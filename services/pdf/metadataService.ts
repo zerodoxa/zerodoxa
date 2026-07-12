@@ -42,6 +42,7 @@ export async function extractPdfMetadata(
     });
 
     const pdf = await loadingTask.promise;
+    const pdfDoc = pdf as unknown as { _pdfInfo?: { version?: string | number } };
 
     const metadataResult = await pdf
       .getMetadata()
@@ -61,8 +62,8 @@ export async function extractPdfMetadata(
         pageCount: pdf.numPages,
 
         pdfVersion:
-          (pdf as any)?._pdfInfo?.version
-            ? String((pdf as any)._pdfInfo.version)
+          pdfDoc._pdfInfo?.version
+            ? String(pdfDoc._pdfInfo.version)
             : undefined,
 
         author:

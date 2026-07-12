@@ -92,3 +92,5 @@ export * from "./compress";
 export * from "./rotate";
 export * from "./delete-pages";
 export * from "./extract-pages";
+export * from "./images-to-pdf";
+export * from "./organize";

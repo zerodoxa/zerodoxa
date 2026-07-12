@@ -1,101 +1,65 @@
+"use server";
+
+import { writeFile, readFile } from "node:fs/promises";
+import * as crypto from "node:crypto";
+import { tmpdir } from "node:os";
+import { join } from "path";
 import { PDFDocument, degrees } from "pdf-lib";
 
-import { validatePdfFile } from "@/lib/pdf/validation";
-import { extractPdfMetadata } from "./metadataService";
-
-import type {
-  RotatePdfItem,
-  RotatePdfOptions,
-  RotatePdfResult,
-} from "@/types/pdf";
-
-export async function prepareRotateItem(
-  file: File
-): Promise<RotatePdfItem> {
-  const validation = validatePdfFile(file);
-
-  if (!validation.isValid) {
-    return {
-      id: `${file.name}-${Date.now()}`,
-      file,
-      name: file.name,
-      size: file.size,
-      pages: 0,
-      status: "error",
-      error: validation.error ?? "Invalid PDF.",
-    };
-  }
-
-  const metadata = await extractPdfMetadata(file);
-
-  if (!metadata.success || !metadata.metadata) {
-    return {
-      id: `${file.name}-${Date.now()}`,
-      file,
-      name: file.name,
-      size: file.size,
-      pages: 0,
-      status: "error",
-      error: metadata.error ?? "Unable to read PDF.",
-    };
-  }
-
-  return {
-    id: `${file.name}-${Date.now()}`,
-    file,
-    name: metadata.metadata.fileName,
-    size: metadata.metadata.fileSize,
-    pages: metadata.metadata.pageCount ?? 0,
-    status: "ready",
-  };
+export interface RotatePdfServerOptions {
+  inputPath: string;
+  rotations: Record<number, number>; // Maps 0-indexed page numbers to rotation angles (0, 90, 180, 270)
 }
 
-export async function rotatePdf(
-  item: RotatePdfItem,
-  options: RotatePdfOptions
-): Promise<RotatePdfResult> {
+export async function rotatePdf(options: RotatePdfServerOptions): Promise<{ outputPath: string }> {
   try {
-    const bytes = await item.file.arrayBuffer();
+    if (!options.inputPath) {
+      throw new Error("Input path is required");
+    }
 
+    const tempDir = await createTempDirectory("rotatepdf");
+    const uniqueId = crypto.randomUUID();
+    const tempOutputPath = join(tempDir, `rotated-${uniqueId}.pdf`);
+
+    const bytes = await readFile(options.inputPath);
     const pdf = await PDFDocument.load(bytes);
 
-    pdf.getPages().forEach((page) => {
-      page.setRotation(degrees(options.angle));
-    });
+    const pages = pdf.getPages();
+    for (const [pageIdxStr, angle] of Object.entries(options.rotations)) {
+      const pageIdx = parseInt(pageIdxStr, 10);
+      if (pageIdx >= 0 && pageIdx < pages.length) {
+        const page = pages[pageIdx];
+        const intrinsic = page.getRotation().angle;
+        page.setRotation(degrees((intrinsic + angle) % 360));
+      }
+    }
 
     const savedBytes = await pdf.save({
       useObjectStreams: true,
     });
 
-    const pdfArray =
-      savedBytes instanceof Uint8Array
-        ? savedBytes
-        : new Uint8Array(savedBytes);
+    await writeFile(tempOutputPath, Buffer.from(savedBytes));
 
-    const pdfBuffer = pdfArray.buffer.slice(
-      pdfArray.byteOffset,
-      pdfArray.byteOffset + pdfArray.byteLength
-    ) as ArrayBuffer;
-
-    const blob = new Blob([pdfBuffer], {
-      type: "application/pdf",
-    });
-
-    return {
-      success: true,
-      blob,
-      fileName: item.name.replace(
-        /\.pdf$/i,
-        "-rotated.pdf"
-      ),
-    };
+    return { outputPath: tempOutputPath };
   } catch (error) {
-    return {
-      success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Rotation failed.",
-    };
+    console.error("PDF server rotation error:", error);
+    throw error;
+  }
+}
+
+async function createTempDirectory(prefix: string): Promise<string> {
+  const tempDir = join(tmpdir(), prefix + "-" + crypto.randomUUID().split("-")[0]);
+  const { mkdir } = await import("node:fs/promises");
+  await mkdir(tempDir, { recursive: true });
+  await writeFile(join(tempDir, ".keep"), "");
+  return tempDir;
+}
+
+export async function cleanupTempDirectory(tempPath: string): Promise<void> {
+  try {
+    const { rm } = await import("node:fs/promises");
+    await rm(tempPath, { recursive: true, force: true });
+  } catch (error) {
+    console.warn("Failed to clean up temp directory:", tempPath, error);
   }
 }
