@@ -11,7 +11,7 @@ import { ecosystems } from "../data/ecosystem";
 export default function Ecosystem() {
   return (
     <SectionLayout id="ecosystem" className="relative overflow-hidden">
-      <div className="absolute bottom-0 left-0 h-72 w-72 rounded-full bg-violet-500/10 blur-[120px]" />
+      <div className="pointer-events-none absolute bottom-0 left-0 h-72 w-72 rounded-full bg-violet-500/10 blur-[120px]" />
 
       <SlideUp>
         <SectionTitle
