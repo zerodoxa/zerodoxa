@@ -1,36 +1,70 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PDFMedic
 
-## Getting Started
+Professional PDF toolkit built with Next.js.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+✅ Merge PDF
+✅ Split PDF
+✅ Compress PDF
+✅ Rotate PDF
+✅ Delete Pages
+✅ Extract Pages
+✅ Reorder Pages
+✅ Images to PDF
+✅ PDF to Images
+✅ Protect PDF
+✅ Unlock PDF
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Tech Stack
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Next.js**
+- **TypeScript**
+- **Tailwind CSS**
+- **pdf-lib**
+- **qpdf**
+- **Poppler**
+- **Docker**
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Installation
 
-## Learn More
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/zerodoxa/zerodoxa.git
+   cd zerodoxa
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+2. **Install system dependencies:**
+   PDFMedic requires `qpdf` and `poppler-utils` to be installed on your system for full functionality.
+   - **Ubuntu/Debian:** `sudo apt-get install qpdf poppler-utils`
+   - **macOS:** `brew install qpdf poppler`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+3. **Install npm packages:**
+   ```bash
+   npm install
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+4. **Run the development server:**
+   ```bash
+   npm run dev
+   ```
 
-## Deploy on Vercel
+## Docker
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+The easiest way to run PDFMedic is using Docker, as it automatically provisions the required system dependencies (`qpdf` and `poppler-utils`).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. **Build and start the container:**
+   ```bash
+   docker compose up -d --build
+   ```
+
+2. **Access the application:**
+   Open `http://localhost:3000` in your browser.
+
+## Deployment
+
+### Railway
+You can deploy this project easily on Railway by linking your GitHub repository. The included `railway.json` and `Dockerfile` will ensure that the required system dependencies are installed and the app runs smoothly.
+
+### Docker
+Use the provided `docker-compose.yml` and `Dockerfile` to deploy the app to any VPS or cloud provider that supports Docker containers.
